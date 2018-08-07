@@ -65,13 +65,13 @@ def handle_command(command, channel):
         text=response or default_response
     )
 
-def sendResponse():
+def response():
     slack_client.api_call(
         "chat.postMessage",
         channel='milochannel',
         text="Top 10 Trending Tweets: \n" + tweet_trend()
     )
-    Timer(86400,sendResponse).start()
+    Timer(600,response).start()
 
 def tweet_trend():
     tweet_list = api.trends_place(1)
@@ -99,7 +99,7 @@ def tweet_trend():
 if __name__ == "__main__":
     if slack_client.rtm_connect(with_team_state=False):
         print("Starter Bot connected and running!")
-        sendResponse()
+        response()
 
         # Read bot's user ID by calling Web API method `auth.test`
         starterbot_id = slack_client.api_call("auth.test")["user_id"]

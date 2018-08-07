@@ -1,4 +1,5 @@
 from operator import itemgetter
+from threading import Timer
 
 from tweepy import API
 from tweepy import OAuthHandler
@@ -70,7 +71,7 @@ def sendResponse():
         channel='milochannel',
         text="Top 10 Trending Tweets: \n" + tweet_trend()
     )
-    #Timer(86400,sendResponse).start()
+    Timer(86400,sendResponse).start()
 
 def tweet_trend():
     tweet_list = api.trends_place(1)

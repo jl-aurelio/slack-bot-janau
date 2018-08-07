@@ -1,11 +1,19 @@
+from operator import itemgetter
+
+from tweepy import API
+from tweepy import OAuthHandler
 import os
+import keys
 import time
 import re
 from slackclient import SlackClient
 
+auth = OAuthHandler(keys.consumer_key,keys.consumer_secret)
+auth.set_access_token(keys.access_token,keys.access_token_secret)
+api = API(auth)
 
 # instantiate Slack client
-slack_client = SlackClient('xoxb-410945567237-410566020900-eF4NrSBb82yNkIA1v4xJSber')
+slack_client = SlackClient(keys.slack_token)
 # starterbot's user ID in Slack: value is assigned after the bot starts up
 starterbot_id = None
 
@@ -47,7 +55,7 @@ def handle_command(command, channel):
     response = None
     # This is where you start to implement more commands!
     if command.startswith(EXAMPLE_COMMAND):
-        response = "Sure...write some more code then I can do that!"
+        response = tweet_trend()
 
     # Sends the response back to the channel
     slack_client.api_call(
@@ -56,9 +64,42 @@ def handle_command(command, channel):
         text=response or default_response
     )
 
+def sendResponse():
+    slack_client.api_call(
+        "chat.postMessage",
+        channel='milochannel',
+        text="Top 10 Trending Tweets: \n" + tweet_trend()
+    )
+    #Timer(86400,sendResponse).start()
+
+def tweet_trend():
+    tweet_list = api.trends_place(1)
+    topSorted = []
+
+    trends = tweet_list[0]
+    temp = trends['trends']
+
+    for trnd in temp:
+        topSorted.append(trnd)
+
+    topSorted = sorted(topSorted, key=itemgetter('tweet_volume'),reverse=True)
+
+    ctr = 1
+    top10 = []
+
+    for test in topSorted:
+        if ctr <= 10:
+            top10.append(str(ctr) + '. ' + test['name'])
+            ctr +=1
+
+    trending10 = ' \n'.join(top10)
+    return trending10
+
 if __name__ == "__main__":
     if slack_client.rtm_connect(with_team_state=False):
         print("Starter Bot connected and running!")
+        sendResponse()
+
         # Read bot's user ID by calling Web API method `auth.test`
         starterbot_id = slack_client.api_call("auth.test")["user_id"]
         while True:
